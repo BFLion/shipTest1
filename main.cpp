@@ -14,74 +14,76 @@ private:
     std::vector<Entry> chapters;
 
 public:
-    void loadDocument(const std::string& filename) {
-        std::ifstream file(filename);
-        if (!file.is_open()) {
-            std::cerr << "Unable to open file!" << std::endl;
-            return;
-        }
+void loadDocument(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Unable to open file!" << std::endl;
+        return;
+    }
 
-        std::string line;
-        Entry* currentChapter = nullptr;
-        Entry* currentSubChapter = nullptr;
+    std::string line;
+    Entry* currentChapter = nullptr;
+    Entry* currentSubChapter = nullptr;
 
-        while (getline(file, line)) {
-            if (line.empty()) continue;
+    while (getline(file, line)) {
+        if (line.empty()) continue;
 
-            if (line.find("Chapter:") == 0) {
-                chapters.push_back({line});
-                currentChapter = &chapters.back();
-                currentSubChapter = nullptr;
-            } else if (line.find(".") == line.rfind(".")) {
-                if (currentChapter) {
-                    currentChapter->subEntries.push_back({line});
-                    currentSubChapter = &currentChapter->subEntries.back();
-                }
-            } else if (line.find(".") != line.rfind(".")) {
-                if (currentSubChapter) {
-                    currentSubChapter->subEntries.push_back({line});
-                }
-            } else {
-                if (currentSubChapter && !currentSubChapter->subEntries.empty()) {
+        if (line.find("章节") == 0) {
+            chapters.push_back({line});
+            currentChapter = &chapters.back();
+            currentSubChapter = nullptr;
+        } else if (line.find(".") != std::string::npos && line.rfind(".") == line.find(".")) {
+            if (currentChapter) {
+                currentChapter->subEntries.push_back({line});
+                currentSubChapter = &currentChapter->subEntries.back();
+            }
+        } else if (line.find(".") != line.rfind(".")) {
+            if (currentSubChapter) {
+                currentSubChapter->subEntries.push_back({line});
+            }
+        } else {
+            if (currentChapter && !currentSubChapter) {
+                currentChapter->content += line + "\n";
+            } else if (currentSubChapter) {
+                if (currentSubChapter->subEntries.empty()) {
+                    currentSubChapter->content += line + "\n";
+                } else {
                     currentSubChapter->subEntries.back().content += line + "\n";
-                } else if (currentChapter) {
-                    currentChapter->content += line + "\n";
                 }
             }
         }
     }
+}
 
-    std::vector<std::string> searchByKeyword(const std::string& keyword) {
-        std::vector<std::string> foundSections;
+std::vector<std::string> searchByKeyword(const std::string& keyword) {
+    std::vector<std::string> foundSections;
 
-        for (const auto& chapter : chapters) {
-            bool chapterAdded = false;
-            if (chapter.title.find(keyword) != std::string::npos) {
-                foundSections.push_back(chapter.title);
-                chapterAdded = true;
+    for (const auto& chapter : chapters) {
+        for (const auto& subChapter : chapter.subEntries) {
+            for (const auto& subSubChapter : subChapter.subEntries) {
+                if (subSubChapter.title.find(keyword) != std::string::npos || subSubChapter.content.find(keyword) != std::string::npos) {
+                    std::string result = chapter.title.substr(0, chapter.title.find(" ")) + " > " + 
+                                         subChapter.title.substr(0, subChapter.title.find(" ")) + " > " + 
+                                         subSubChapter.title + " \"" + subSubChapter.content.substr(0, subSubChapter.content.find("\n")) + "\"";
+                    foundSections.push_back(result);
+                }
             }
-
-            for (const auto& subChapter : chapter.subEntries) {
-                bool subChapterAdded = false;
-                if (subChapter.title.find(keyword) != std::string::npos || subChapter.content.find(keyword) != std::string::npos) {
-                    foundSections.push_back(chapter.title + " > " + subChapter.title);
-                    subChapterAdded = true;
-                }
-
-                for (const auto& subSubChapter : subChapter.subEntries) {
-                    if (subSubChapter.title.find(keyword) != std::string::npos || subSubChapter.content.find(keyword) != std::string::npos) {
-                        foundSections.push_back(chapter.title + " > " + subChapter.title + " > " + subSubChapter.title);
-                    } else if (!subChapterAdded && subSubChapter.content.find(keyword) != std::string::npos) {
-                        foundSections.push_back(chapter.title + " > " + subChapter.title);
-                    } else if (!chapterAdded && subSubChapter.content.find(keyword) != std::string::npos) {
-                        foundSections.push_back(chapter.title);
-                    }
-                }
+            
+            if (subChapter.title.find(keyword) != std::string::npos || subChapter.content.find(keyword) != std::string::npos) {
+                std::string result = chapter.title.substr(0, chapter.title.find(" ")) + " > " + 
+                                     subChapter.title + " \"" + subChapter.content.substr(0, subChapter.content.find("\n")) + "\"";
+                foundSections.push_back(result);
             }
         }
 
-        return foundSections;
+        if (chapter.title.find(keyword) != std::string::npos || chapter.content.find(keyword) != std::string::npos) {
+            std::string result = chapter.title + " \"" + chapter.content.substr(0, chapter.content.find("\n")) + "\"";
+            foundSections.push_back(result);
+        }
     }
+
+    return foundSections;
+}
 };
 
 int main() {
@@ -104,3 +106,4 @@ int main() {
 
     return 0;
 }
+
