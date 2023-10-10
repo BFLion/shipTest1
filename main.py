@@ -67,12 +67,12 @@ if __name__ == "__main__":
     ds = DocumentSearch()
     #ds.loadDocument("sample.txt")
     ds.loadDocument("handbook.txt")
-    keyword = input("Enter a keyword to search: ")
+    keyword = input("您想查询的关键词: ")
 
     sections = ds.searchByKeyword(keyword)
     if not sections:
-        print("No sections found with the keyword!")
+        print("没有结果!")
     else:
-        print("Found keyword in the following sections:")
+        print("关键词出现在一下章节：")
         for section in sections:
             print(section)
