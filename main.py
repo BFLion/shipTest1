@@ -49,15 +49,18 @@ class DocumentSearch:
             for subChapter in chapter.subEntries:
                 for subSubChapter in subChapter.subEntries:
                     if keyword in subSubChapter.title or keyword in subSubChapter.content:
-                        result = f"{chapter.title.split(' ')[0]} > {subChapter.title.split(' ')[0]} > {subSubChapter.title} \"{subSubChapter.content.split('n')[0]}\""
+                        first_line_content = subSubChapter.content.split('\n')[0]
+                        result = f"{chapter.title.split(' ')[0]} > {subChapter.title.split(' ')[0]} > {subSubChapter.title} \"{first_line_content}\""
                         foundSections.append(result)
 
                 if keyword in subChapter.title or keyword in subChapter.content:
-                    result = f"{chapter.title.split(' ')[0]} > {subChapter.title} \"{subChapter.content.split('n')[0]}\""
+                    first_line_content = subChapter.content.split('\n')[0]
+                    result = f"{chapter.title.split(' ')[0]} > {subChapter.title} \"{first_line_content}\""
                     foundSections.append(result)
 
             if keyword in chapter.title or keyword in chapter.content:
-                result = f"{chapter.title} \"{chapter.content.split('n')[0]}\""
+                first_line_content = chapter.content.split('\n')[0]
+                result = f"{chapter.title} \"{first_line_content}\""
                 foundSections.append(result)
 
         return foundSections
@@ -73,6 +76,6 @@ if __name__ == "__main__":
     if not sections:
         print("没有结果!")
     else:
-        print("关键词出现在一下章节：")
+        print("关键词出现在以下章节：")
         for section in sections:
             print(section)
